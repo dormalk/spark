@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#10090d">
+  <meta name="description" content="SPARK — רגע קטן של קרבה בכל יום">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <title>SPARK — ביחד זה ניצוץ</title>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">✦</span><span>SPARK</span></div>
+      <div class="connection" id="connectionStatus">מצב מקומי</div>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">הזמן שלכם. הניצוץ שלכם.</p>
+      <h1>קצת יותר <em>ביחד.</em></h1>
+      <p class="sub">קלף אחד קטן. רגע אחד שהוא רק שלכם.</p>
+    </section>
+
+    <section class="pair-panel panel">
+      <div class="pair-copy">
+        <span class="eyebrow">המרחב הזוגי שלכם</span>
+        <h2 id="pairTitle">מתחילים ביחד</h2>
+        <p id="pairDescription">צרו קוד זוגי או הצטרפו עם קוד שקיבלתם.</p>
+      </div>
+      <div class="pair-actions">
+        <input id="pairCodeInput" maxlength="8" placeholder="קוד זוגי" aria-label="קוד זוגי">
+        <div class="button-row">
+          <button class="button button-gold" id="createPairBtn">יצירת קוד</button>
+          <button class="button button-outline" id="joinPairBtn">הצטרפות</button>
+        </div>
+        <p class="hint" id="pairMessage" role="status"></p>
+      </div>
+    </section>
+
+    <section class="decks-section">
+      <div class="section-heading">
+        <div><span class="eyebrow">בחרו את מצב הרוח</span><h2>החפיסות שלכם</h2></div>
+        <span class="tiny-star">✦</span>
+      </div>
+      <div class="deck-grid" id="deckGrid"></div>
+    </section>
+
+    <section class="draw-section panel" id="drawSection">
+      <div class="draw-topline"><span class="eyebrow" id="activeDeckLabel">הקלף הבא שלכם</span><span class="card-count" id="cardCount"></span></div>
+      <article class="prompt-card" id="promptCard">
+        <div class="card-ornament">✦</div>
+        <p class="card-category" id="cardCategory">בחרו חפיסה</p>
+        <h2 id="cardText">כל ניצוץ מתחיל ברגע קטן.</h2>
+        <p class="card-note" id="cardNote">בחרו אחת מהחפיסות למעלה והגרילו קלף.</p>
+      </article>
+      <div class="draw-actions">
+        <button class="button button-gold" id="drawBtn">שליפת קלף</button>
+        <button class="button button-outline" id="doneBtn" disabled>עשינו את זה ✓</button>
+        <button class="button button-quiet" id="skipBtn" disabled>אולי בפעם אחרת</button>
+      </div>
+    </section>
+
+    <section class="history-section">
+      <div class="section-heading"><div><span class="eyebrow">הרגעים הקטנים שלכם</span><h2>היסטוריה</h2></div></div>
+      <div class="history-list panel" id="historyList"><p class="empty">עוד אין רגעים שמורים. זה הזמן ליצור את הראשון ✨</p></div>
+    </section>
+
+    <footer><span>SPARK</span><span>נבנה מקרבה, בחירה והקשבה.</span></footer>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
