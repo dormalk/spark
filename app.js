@@ -65,12 +65,30 @@ const decks = [
     ["סוגרים את הערב","בחרו יחד איך לסיים את הזמן האינטימי: חיבוק, נשיקה, מנוחה או כל דבר שמתאים לשניכם."],
     ["בחרו יחד שיר, כבו מסכים והקדישו חמש דקות למגע נעים בהסכמה.","אפשר לבחור עיסוי ידיים, חיבוק או ליטוף."],
     ["כל אחד מציע מחווה אינטימית קטנה שהשני יכול לבחור לקבל או לוותר עליה.","כבדו כל תשובה בלי לשכנע."],
-    ["הכינו יחד את החדר לאווירה רגועה ונעימה.","בחרו תאורה, מוזיקה וסידור שנוחים לשניכם."]
+    ["הכינו יחד את החדר לאווירה רגועה ונעימה.","בחרו תאורה, מוזיקה וסידור שנוחים לשניכם."],
+    ["אתגר מין אוראלי","הקדישו זמן למין אוראלי, רק אם שניכם רוצים. תיאמו מראש גבולות, היגיינה והגנה מתאימה."],
+    ["אתגר הדדיות אוראלית","העניקו זה לזו מין אוראלי בתורות, ורק בהתאם לרצון ולנוחות של שניכם."],
+    ["מין אוראלי עם גבולות ברורים","לפני שמתחילים, הסכימו מה נעים, מה לא, ואיך מסמנים לעצור. המשיכו רק כל עוד שניכם מעוניינים."],
+    ["תנוחת כפיות","נסו יחסי מין בתנוחת כפיות על הצד. התאימו את הזווית והתנועה לנוחות של שניכם."],
+    ["תנוחת רכיבה","נסו תנוחת רכיבה, שבה אחד מבני הזוג מעל השני. התחילו לאט והתאימו את הקצב יחד."],
+    ["תנוחה פנים אל פנים בישיבה","נסו תנוחה בישיבה זה מול זו, תוך שמירה על קרבה וקשר עין. השתמשו בתמיכה יציבה."],
+    ["תנוחת דוגי","אם שניכם מעוניינים, נסו תנוחת חדירה מאחור. התחילו בעדינות, תקשרו ועצרו אם יש כאב."],
+    ["תנוחת צד חדשה","בחרו וריאציה נוחה של תנוחה על הצד. השתמשו בכריות לתמיכה ושנו זווית אם צריך."],
+    ["אתגר שלוש התנוחות","במהלך מפגש אינטימי, נסו עד שלוש תנוחות ששניכם מכירים ומרגישים איתן בנוח. אין חובה להשלים את כולן."],
+    ["היכרות אנאלית חיצונית","אם שניכם מעוניינים, התחילו במגע חיצוני בלבד באזור פי הטבעת. השתמשו בחומר סיכה מתאים והפסיקו אם יש אי נוחות."],
+    ["אתגר אביזר אנאלי ייעודי","הכירו אביזר שמיועד במפורש לשימוש אנאלי, עם בסיס מתרחב, חומר סיכה מתאים ובהתאם להוראות היצרן. לא משתמשים באביזר ללא בסיס מתרחב."],
+    ["אתגר שליטה מוסכם","קבעו מראש גבולות ומילת עצירה, ואז אחד מוביל משחק אינטימי קצר. עצרו מיד אם מילת העצירה נאמרת."],
+    ["כיסוי עיניים ומגע","אחד עוצם עיניים והשני מציע מגעים מוסכמים ועדינים למשך חמש דקות. לאחר מכן מתחלפים."],
+    ["קשירה רכה ובטוחה","השתמשו רק באביזר רך לשחרור מהיר, ללא קשירה לצוואר או הגבלת נשימה. הישארו בקשר עין ובטווח שחרור מיידי."],
+    ["משחק תפקידים של זרים","העמידו פנים שאתם נפגשים לראשונה בבר או בבית קפה. התחילו בשיחת פלרטוט קצרה והמשיכו רק אם שניכם נהנים."],
+    ["אתגר אביזר זוגי","בחרו אביזר אינטימי המיועד לזוגות, קראו את הוראות היצרן ונקו אותו לפי ההנחיות לפני ואחרי השימוש."],
+    ["אתגר קונדום","תרגלו יחד פתיחה והלבשה נכונה של קונדום חדש, בדקו תאריך תפוגה והשאירו אותו זמין למפגש."],
+    ["מקלחת אינטימית","התקלחו יחד, השתמשו במשטח נגד החלקה והקדישו זמן למגע נעים. אל תשתמשו בשמן או בחומר סיכה שאינו מתאים למים או לקונדומים."]
   ]}
 ];
 
 const $ = id => document.getElementById(id);
-let state = {pairCode:null,activeDeck:null,currentCard:null,history:[]};
+let state = {pairCode:null,activeDeck:null,currentCard:null,history:[],drawnCards:{}};
 let pairId = null, busy = false;
 const localKey = "spark-state-v1";
 
@@ -96,13 +114,20 @@ function showCard(card){
 }
 function draw(){
   if(!state.activeDeck){toast("קודם בחרו חפיסה");return;}
-  const deck=decks.find(d=>d.id===state.activeDeck), item=deck.cards[Math.floor(Math.random()*deck.cards.length)];
+  const deck=decks.find(d=>d.id===state.activeDeck);
+  state.drawnCards=state.drawnCards||{};
+  let drawn=state.drawnCards[deck.id]||[];
+  if(drawn.length>=deck.cards.length){drawn=[];state.drawnCards[deck.id]=[];}
+  const available=deck.cards.map((_,i)=>i).filter(i=>!drawn.includes(i));
+  const index=available[Math.floor(Math.random()*available.length)];
+  const item=deck.cards[index];
+  state.drawnCards[deck.id]=[...drawn,index];
   state.currentCard={deckId:deck.id,deckName:deck.name,text:item[0],note:item[1]};
-  showCard(state.currentCard); $("cardCount").textContent=`${deck.cards.length} קלפים בחפיסה`; saveLocal();
+  showCard(state.currentCard); $("cardCount").textContent=`${deck.cards.length} קלפים בחפיסה · ${deck.cards.length-state.drawnCards[deck.id].length} עד לערבוב מחדש`; saveLocal();
 }
 async function syncState(){
   if(!pairId)return;
-  const {error}=await supabase.rpc("spark_save_state",{p_pair_id:pairId,p_state:{history:state.history}});
+  const {error}=await supabase.rpc("spark_save_state",{p_pair_id:pairId,p_state:{history:state.history,drawnCards:state.drawnCards||{}}});
   if(error) console.warn("Sync failed",error.message);
 }
 async function finish(status){
@@ -128,7 +153,7 @@ async function joinPair(){
   if(!code){$("pairMessage").textContent="צריך להזין קוד זוגי.";return;}
   const {data,error}=await supabase.rpc("spark_get_state",{p_pair_code:code});
   if(error||!data){$("pairMessage").textContent="לא מצאנו את הקוד. בדקו ונסו שוב.";return;}
-  pairId=data.pair_id;setPairUI(code);state.history=data.state?.history||[];renderHistory();saveLocal();$("pairMessage").textContent="הצטרפתם בהצלחה!";setStatus("מחובר לענן");toast("ברוכים הבאים למרחב הזוגי");
+  pairId=data.pair_id;setPairUI(code);state.history=data.state?.history||[];state.drawnCards=data.state?.drawnCards||{};renderHistory();saveLocal();$("pairMessage").textContent="הצטרפתם בהצלחה!";setStatus("מחובר לענן");toast("ברוכים הבאים למרחב הזוגי");
 }
 async function init(){
   loadLocal();renderDecks();renderHistory();setPairUI(state.pairCode);showCard(null);
