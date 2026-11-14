@@ -31,6 +31,26 @@ const decks = [
     ["צלמו סלפי זוגי מצחיק ותנו לו שם של סרט.","לא צריך להיות פוטוגניים."],
     ["כל אחד בוחר שיר אחד — והשני צריך לנחש למה נבחר.","ספרו את הסיפור מאחורי הבחירה."],
     ["תנו חיבוק של 20 שניות, אם נעים לשניכם.","אפשר גם להחזיק ידיים."]
+  ]},
+  {id:"afterdark",name:"SPARK AFTER DARK",icon:"🔥",desc:"חפיסה אינטימית למבוגרים בלבד · 18+",cards:[
+    ["נשיקה בלי למהר","התנשקו במשך דקה, בקצב שנעים לשניכם. אפשר לעצור או לשנות בכל רגע."],
+    ["מסאז׳ מפנק","העניקו זה לזו עיסוי כתפיים או גב במשך שלוש דקות, ושאלו מה נעים."],
+    ["ריקוד פרטי","בחרו שיר חושני ורקדו יחד מקרוב, רק אם שניכם מרגישים בנוח."],
+    ["מובילים ומובלים","בחרו מי מוביל את המשחק למשך שתי דקות. המוביל מציע, והשני מאשר כל צעד."],
+    ["משחק תפקידים","המציאו שתי דמויות שנפגשות לראשונה ואלתרו סצנת פלירטוט קצרה."],
+    ["הפתעת מגע","הציעו לבן או בת הזוג מגע עדין במקום שנעים ומוסכם על שניכם."],
+    ["זמן ללא מסכים","הניחו את הטלפונים בצד והקדישו עשר דקות לקרבה, נשיקות ומגע בהסכמה."],
+    ["תפריט מגע","כל אחד בוחר שני סוגי מגע שנעימים לו ומדגים או מסביר לבן הזוג."],
+    ["ערב לפי בחירה","אחד מכם מתכנן מפגש אינטימי והשני בוחר מה מתאים לו מתוך ההצעות."],
+    ["נשיקה בהפתעה","בקשו רשות למחווה רומנטית מפתיעה ותנו לה לקרות ברגע המתאים."],
+    ["אווירה חדשה","סדרו תאורה, מוזיקה ואווירה בחדר לקראת זמן זוגי אינטימי."],
+    ["מילים שמדליקות","לחישו זה לזו מחמאה או משפט פלרטטני, ובדקו מה נעים לשמוע."],
+    ["קרבה בקצב שלכם","הקדישו זמן למגע אינטימי בהסכמה, בלי יעד ובלי למהר לשום שלב."],
+    ["יוזמה זוגית","כל אחד מציע פעילות מינית שמתאימה לו. בחרו רק אם יש הסכמה נלהבת של שניכם."],
+    ["לילה של כן, לא ואולי","שתפו שלושה דברים: משהו שהייתם רוצים, משהו שלא מתאים ומשהו שאולי תרצו לנסות בעתיד."],
+    ["חוויה מינית משותפת","אם שניכם רוצים, בחרו פעילות מינית שמתאימה לשניכם והתקדמו בקצב שנוח לשניכם."],
+    ["פנטזיה בהסכמה","שתפו פנטזיה או רעיון אינטימי. אין חובה לממש אותו; אפשר רק לדמיין ולדבר."],
+    ["סוגרים את הערב","בחרו יחד איך לסיים את הזמן האינטימי: חיבוק, נשיקה, מנוחה או כל דבר שמתאים לשניכם."]
   ]}
 ];
 
@@ -47,7 +67,14 @@ function renderDecks(){
   $("deckGrid").innerHTML = decks.map(d=>`<button class="deck ${state.activeDeck===d.id?"active":""}" data-deck="${d.id}"><span class="deck-icon">${d.icon}</span><strong>${d.name}</strong><small>${d.desc}</small></button>`).join("");
   document.querySelectorAll("[data-deck]").forEach(b=>b.addEventListener("click",()=>selectDeck(b.dataset.deck)));
 }
-function selectDeck(id){ state.activeDeck=id; state.currentCard=null; renderDecks(); showCard(null); saveLocal(); }
+function selectDeck(id){
+  if(id==="afterdark" && localStorage.getItem("spark-afterdark-18plus")!=="yes"){
+    const accepted=window.confirm("SPARK AFTER DARK מיועדת לבני ובנות 18 ומעלה בלבד. האם את/ה בן/בת 18 ומעלה ומעוניין/ת להיכנס? כל משימה מחייבת הסכמה הדדית ואפשר לדלג או לעצור בכל רגע.");
+    if(!accepted)return;
+    localStorage.setItem("spark-afterdark-18plus","yes");
+  }
+  state.activeDeck=id; state.currentCard=null; renderDecks(); showCard(null); saveLocal();
+}
 function showCard(card){
   if(!card){ $("activeDeckLabel").textContent="הקלף הבא שלכם"; $("cardCategory").textContent=state.activeDeck?decks.find(d=>d.id===state.activeDeck).name:"בחרו חפיסה"; $("cardText").textContent=state.activeDeck?"מוכנים לניצוץ הבא?":"כל ניצוץ מתחיל ברגע קטן."; $("cardNote").textContent=state.activeDeck?"לחצו על שליפת קלף כדי לגלות את המשימה שלכם.":"בחרו אחת מהחפיסות למעלה והגרילו קלף."; $("doneBtn").disabled=true; $("skipBtn").disabled=true; $("cardCount").textContent=""; return; }
   $("activeDeckLabel").textContent="הקלף שלכם"; $("cardCategory").textContent=card.deckName; $("cardText").textContent=card.text; $("cardNote").textContent=card.note; $("doneBtn").disabled=false; $("skipBtn").disabled=false;
