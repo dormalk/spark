@@ -64,7 +64,7 @@ function loadLocal(){ try { state = {...state,...JSON.parse(localStorage.getItem
 function toast(msg){ const el=$("toast"); el.textContent=msg; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2600); }
 function setStatus(text){ $("connectionStatus").textContent=text; }
 function renderDecks(){
-  $("deckGrid").innerHTML = decks.map(d=>`<button class="deck ${state.activeDeck===d.id?"active":""}" data-deck="${d.id}"><span class="deck-icon">${d.icon}</span><strong>${d.name}</strong><small>${d.desc}</small></button>`).join("");
+  $("deckGrid").innerHTML = decks.map(d=>`<button class="deck ${d.id==="afterdark"?"special-deck":""} ${state.activeDeck===d.id?"active":""}" data-deck="${d.id}"><span class="deck-icon">${d.icon}</span><strong>${d.name}</strong><small>${d.desc}</small></button>`).join("");
   document.querySelectorAll("[data-deck]").forEach(b=>b.addEventListener("click",()=>selectDeck(b.dataset.deck)));
 }
 function selectDeck(id){
