@@ -219,7 +219,7 @@ const decks = [
 ];
 
 const $ = id => document.getElementById(id);
-let state = {pairCode:null,activeDeck:null,currentCard:null,history:[],drawnCards:{}};
+let state = {pairCode:null,activeDeck:null,currentCard:null,history:[],drawnCards:{},deckOrder:{}};
 let pairId = null, busy = false;
 const localKey = "spark-state-v1";
 
@@ -243,22 +243,38 @@ function showCard(card){
   if(!card){ $("activeDeckLabel").textContent="הקלף הבא שלכם"; $("cardCategory").textContent=state.activeDeck?decks.find(d=>d.id===state.activeDeck).name:"בחרו חפיסה"; $("cardText").textContent=state.activeDeck?"מוכנים לניצוץ הבא?":"כל ניצוץ מתחיל ברגע קטן."; $("cardNote").textContent=state.activeDeck?"לחצו על שליפת קלף כדי לגלות את המשימה שלכם.":"בחרו אחת מהחפיסות למעלה והגרילו קלף."; $("doneBtn").disabled=true; $("skipBtn").disabled=true; $("cardCount").textContent=""; return; }
   $("activeDeckLabel").textContent="הקלף שלכם"; $("cardCategory").textContent=card.deckName; $("cardText").textContent=card.text; $("cardNote").textContent=card.note; $("doneBtn").disabled=false; $("skipBtn").disabled=false;
 }
+function shuffledIndexes(length){
+  const order=Array.from({length},(_,i)=>i);
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+  return order;
+}
+function shuffleDeck(){
+  if(!state.activeDeck){toast("קודם בחרו חפיסה");return;}
+  const deck=decks.find(d=>d.id===state.activeDeck);
+  state.deckOrder=state.deckOrder||{}; state.drawnCards=state.drawnCards||{};
+  state.deckOrder[deck.id]=shuffledIndexes(deck.cards.length);
+  state.drawnCards[deck.id]=[];
+  state.currentCard=null; showCard(null);
+  $("cardCount").textContent=`${deck.cards.length} קלפים בחפיסה · ${deck.cards.length} זמינים`;
+  saveLocal(); syncState(); toast("החפיסה עורבבה מחדש ✨");
+}
 function draw(){
   if(!state.activeDeck){toast("קודם בחרו חפיסה");return;}
   const deck=decks.find(d=>d.id===state.activeDeck);
-  state.drawnCards=state.drawnCards||{};
+  state.drawnCards=state.drawnCards||{}; state.deckOrder=state.deckOrder||{};
   let drawn=state.drawnCards[deck.id]||[];
-  if(drawn.length>=deck.cards.length){drawn=[];state.drawnCards[deck.id]=[];}
-  const available=deck.cards.map((_,i)=>i).filter(i=>!drawn.includes(i));
-  const index=available[Math.floor(Math.random()*available.length)];
+  if(drawn.length>=deck.cards.length){drawn=[];state.drawnCards[deck.id]=[];state.deckOrder[deck.id]=shuffledIndexes(deck.cards.length);}
+  if(!state.deckOrder[deck.id]||state.deckOrder[deck.id].length!==deck.cards.length)state.deckOrder[deck.id]=shuffledIndexes(deck.cards.length);
+  const index=state.deckOrder[deck.id].find(i=>!drawn.includes(i));
   const item=deck.cards[index];
   state.drawnCards[deck.id]=[...drawn,index];
   state.currentCard={deckId:deck.id,deckName:deck.name,text:item[0],note:item[1]};
   showCard(state.currentCard); $("cardCount").textContent=`${deck.cards.length} קלפים בחפיסה · ${deck.cards.length-state.drawnCards[deck.id].length} עד לערבוב מחדש`; saveLocal();
 }
+
 async function syncState(){
   if(!pairId)return;
-  const {error}=await supabase.rpc("spark_save_state",{p_pair_id:pairId,p_state:{history:state.history,drawnCards:state.drawnCards||{}}});
+  const {error}=await supabase.rpc("spark_save_state",{p_pair_id:pairId,p_state:{history:state.history,drawnCards:state.drawnCards||{},deckOrder:state.deckOrder||{}}});
   if(error) console.warn("Sync failed",error.message);
 }
 async function finish(status){
@@ -268,8 +284,27 @@ async function finish(status){
   if(pairId) await syncState();
   toast(status==="done"?"הרגע הזה נשמר ❤️":"נשמר לפעם אחרת");
 }
+function returnHistoryCard(historyIndex){
+  const h=state.history[historyIndex];
+  if(!h||!h.deckId){toast("לא ניתן לזהות את החפיסה של הקלף הזה");return;}
+  const deck=decks.find(d=>d.id===h.deckId);
+  if(!deck){toast("החפיסה המקורית לא נמצאה");return;}
+  const index=deck.cards.findIndex(c=>c[0]===h.text&&c[1]===h.note);
+  if(index<0){toast("הקלף לא נמצא בחפיסה המקורית");return;}
+  state.drawnCards=state.drawnCards||{};
+  const drawn=state.drawnCards[deck.id]||[];
+  if(!drawn.includes(index)){toast("הקלף כבר זמין בחפיסה");return;}
+  state.drawnCards[deck.id]=drawn.filter(i=>i!==index);
+  saveLocal(); syncState(); renderHistory(); toast("הקלף הוחזר לחפיסה "+deck.name+" ❤️");
+}
 function renderHistory(){
-  $("historyList").innerHTML=state.history.length?state.history.slice(0,12).map(h=>`<div class="history-item"><div><strong>${escapeHtml(h.text)}</strong><small>${escapeHtml(h.deckName)} · ${new Date(h.at).toLocaleDateString("he-IL")}</small></div><span class="history-status">${h.status==="done"?"הושלם ✓":"דילגנו"}</span></div>`).join(""):'<p class="empty">עוד אין רגעים שמורים. זה הזמן ליצור את הראשון ✨</p>';
+  $("historyList").innerHTML=state.history.length?state.history.slice(0,12).map((h,i)=>{
+    const deck=decks.find(d=>d.id===h.deckId);
+    const index=deck?deck.cards.findIndex(c=>c[0]===h.text&&c[1]===h.note):-1;
+    const available=index>=0&&!(state.drawnCards?.[h.deckId]||[]).includes(index);
+    return `<div class="history-item"><div><strong>${escapeHtml(h.text)}</strong><small>${escapeHtml(h.deckName)} · ${new Date(h.at).toLocaleDateString("he-IL")}</small><button class="history-return" data-return-history="${i}" ${available?"disabled":""}>${available?"כבר בחפיסה":"החזרה לחפיסה"}</button></div><span class="history-status">${h.status==="done"?"הושלם ✓":"דילגנו"}</span></div>`;
+  }).join(''):'<p class="empty">עוד אין רגעים שמורים. זה הזמן ליצור את הראשון ✨</p>';
+  document.querySelectorAll("[data-return-history]").forEach(b=>b.addEventListener("click",()=>returnHistoryCard(Number(b.dataset.returnHistory))));
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function setPairUI(code){state.pairCode=code;$("pairTitle").textContent=code?"המרחב הזוגי מחובר":"מתחילים ביחד";$("pairDescription").textContent=code?`הקוד הזוגי שלכם: ${code}`:"צרו קוד זוגי או הצטרפו עם קוד שקיבלתם.";$("pairCodeInput").value=code||"";saveLocal();}
@@ -284,11 +319,11 @@ async function joinPair(){
   if(!code){$("pairMessage").textContent="צריך להזין קוד זוגי.";return;}
   const {data,error}=await supabase.rpc("spark_get_state",{p_pair_code:code});
   if(error||!data){$("pairMessage").textContent="לא מצאנו את הקוד. בדקו ונסו שוב.";return;}
-  pairId=data.pair_id;setPairUI(code);state.history=data.state?.history||[];state.drawnCards=data.state?.drawnCards||{};renderHistory();saveLocal();$("pairMessage").textContent="הצטרפתם בהצלחה!";setStatus("מחובר לענן");toast("ברוכים הבאים למרחב הזוגי");
+  pairId=data.pair_id;setPairUI(code);state.history=data.state?.history||[];state.drawnCards=data.state?.drawnCards||{};state.deckOrder=data.state?.deckOrder||{};renderHistory();saveLocal();$("pairMessage").textContent="הצטרפתם בהצלחה!";setStatus("מחובר לענן");toast("ברוכים הבאים למרחב הזוגי");
 }
 async function init(){
   loadLocal();renderDecks();renderHistory();setPairUI(state.pairCode);showCard(null);
-  $("drawBtn").addEventListener("click",draw);$("doneBtn").addEventListener("click",()=>finish("done"));$("skipBtn").addEventListener("click",()=>finish("skip"));$("createPairBtn").addEventListener("click",createPair);$("joinPairBtn").addEventListener("click",joinPair);
+  $("drawBtn").addEventListener("click",draw);$("shuffleBtn").addEventListener("click",shuffleDeck);$("doneBtn").addEventListener("click",()=>finish("done"));$("skipBtn").addEventListener("click",()=>finish("skip"));$("createPairBtn").addEventListener("click",createPair);$("joinPairBtn").addEventListener("click",joinPair);
   try{const {error}=await supabase.from("spark_pairs").select("id").limit(1);if(!error)setStatus("מוכן לסנכרון");else setStatus("ממתין להגדרת ענן");}catch{setStatus("מצב מקומי");}
   if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 }
